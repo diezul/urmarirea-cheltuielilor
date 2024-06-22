@@ -10,6 +10,7 @@ from waitress import serve
 # Configurarea botului
 TOKEN = os.getenv('TOKEN', '7408319900:AAGnqFPQtu2nW-S24q8nXTGHMA1RnRlRpw8')
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:FtJVAFZwBpjAwFGclcWfXZULZkOOoEOI@viaduct.proxy.rlwy.net:24869/railway')
+WEBHOOK_URL = os.getenv('WEBHOOK_URL', 'https://yourappname.up.railway.app/webhook')
 
 app = Flask(__name__)
 
@@ -95,7 +96,7 @@ async def list_expenses(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM expenses")
     expenses = cursor.fetchall()
-    response = ""
+    response = "Nu există cheltuieli înregistrate." if not expenses else ""
     for expense in expenses:
         response += f"ID: {expense[0]}, Categorie: {expense[1]}, Luna: {expense[2]}, Suma: {expense[4]}, Plătit: {'Da' if expense[5] else 'Nu'}\n"
     cursor.close()
@@ -188,6 +189,12 @@ def delete_expense_via_api(expense_id):
     conn.close()
     return jsonify({'status': 'success'})
 
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    update = Update.de_json(request.get_json(), application.bot)
+    application.process_update(update)
+    return 'ok'
+
 def run_flask():
     serve(app, host='0.0.0.0', port=5001)
 
@@ -196,6 +203,7 @@ def main():
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
 
+    global application
     application = Application.builder().token(TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
@@ -205,7 +213,7 @@ def main():
     application.add_handler(CommandHandler("pay", pay_expense))
     application.add_handler(CommandHandler("delete", delete_expense))
 
-    application.run_polling()
+    application.bot.set_webhook(WEBHOOK_URL)
 
 if __name__ == '__main__':
     main()
