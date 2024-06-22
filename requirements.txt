@@ -1,3 +1,4 @@
 Flask
 waitress
 psycopg2-binary
+gunicorn

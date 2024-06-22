@@ -2,13 +2,12 @@ import os
 import psycopg2
 from urllib.parse import urlparse
 from flask import Flask, request, jsonify, render_template
-from waitress import serve
 import time
 
 app = Flask(__name__)
 
 # Configurarea bazei de date
-DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:FtJVAFZwBpjAwFGclcWfXZULZkOOoEOI@viaduct.proxy.rlwy.net:24869/railway')
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://db_pcul_user:9zvoZgeYC5y9lsmDx5IoIULBvuVNRBMA@dpg-cpr3pmjv2p9s73a0gudg-a/db_pcul')
 
 def get_db_connection(retry_count=5, delay=2):
     result = urlparse(DATABASE_URL)
