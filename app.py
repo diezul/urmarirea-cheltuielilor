@@ -7,15 +7,14 @@ from datetime import datetime
 app = Flask(__name__)
 
 # Extragem informațiile din URL
-db_url = urlparse('postgresql://expense-tracker_owner:dlC6fghx2WeY@ep-cool-haze-a5llm4ce.us-east-2.aws.neon.tech/expense-tracker?sslmode=require')
+db_url = urlparse('postgres://postgres.fxcjhpkcfgrxwynzbsie:Prinlentile12#@aws-0-eu-central-1.pooler.supabase.com:6543/postgres')
 db_name = db_url.path[1:]
 db_user = db_url.username
 db_password = db_url.password
 db_host = db_url.hostname
 db_port = db_url.port
-db_sslmode = db_url.query.split('=')[1]
 
-DATABASE_URL = f"dbname={db_name} user={db_user} password={db_password} host={db_host} port={db_port} sslmode={db_sslmode}"
+DATABASE_URL = f"dbname={db_name} user={db_user} password={db_password} host={db_host} port={db_port} sslmode=require"
 
 def get_db_connection():
     conn = psycopg2.connect(DATABASE_URL)
