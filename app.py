@@ -2,6 +2,7 @@ import os
 import psycopg2
 from urllib.parse import urlparse
 from flask import Flask, request, jsonify, render_template
+from waitress import serve
 import time
 
 app = Flask(__name__)
