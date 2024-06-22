@@ -7,7 +7,7 @@ from datetime import datetime
 app = Flask(__name__)
 
 # Extragem informațiile din URL
-db_url = urlparse('postgres://postgres.fxcjhpkcfgrxwynzbsie:Prinlentile12#@aws-0-eu-central-1.pooler.supabase.com:6543/postgres')
+db_url = urlparse('postgres://postgres.fxcjhpkcfgrxwynzbsie:Gcdh103vgnadKrZM@aws-0-eu-central-1.pooler.supabase.com:6543/postgres')
 db_name = db_url.path[1:]
 db_user = db_url.username
 db_password = db_url.password
