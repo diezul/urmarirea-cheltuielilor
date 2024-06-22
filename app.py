@@ -1,128 +1,112 @@
-import os
+from flask import Flask, render_template, request, redirect, url_for
 import psycopg2
-from urllib.parse import urlparse
-from flask import Flask, request, jsonify, render_template
-from waitress import serve
-import time
+import os
 from datetime import datetime
 
 app = Flask(__name__)
-
-# Configurarea bazei de date
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://db_pcul_user:9zvoZgeYC5y9lsmDx5IoIULBvuVNRBMA@dpg-cpr3pmjv2p9s73a0gudg-a/db_pcul')
 
-def get_db_connection(retry_count=5, delay=2):
-    result = urlparse(DATABASE_URL)
-    username = result.username
-    password = result.password
-    database = result.path[1:]
-    hostname = result.hostname
-    port = result.port
+def get_db_connection():
+    conn = psycopg2.connect(DATABASE_URL)
+    return conn
 
-    for attempt in range(retry_count):
-        try:
-            conn = psycopg2.connect(
-                database=database,
-                user=username,
-                password=password,
-                host=hostname,
-                port=port
-            )
-            return conn
-        except psycopg2.OperationalError as e:
-            if attempt < retry_count - 1:
-                time.sleep(delay)
-                continue
-            else:
-                raise e
+def format_amount(value):
+    if value is None:
+        return '-'
+    else:
+        return f"{int(value)} lei" if value.is_integer() else f"{value} lei"
 
-@app.route('/init_db')
-def init_db_route():
-    init_db()
-    return 'Database initialized!', 200
-
-def init_db():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Crearea tabelului dacă nu există
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS expenses (
-        id SERIAL PRIMARY KEY,
-        category TEXT NOT NULL,
-        month TEXT NOT NULL,
-        index_value INTEGER,
-        amount REAL,
-        is_paid BOOLEAN DEFAULT FALSE
-    )
-    ''')
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-@app.template_filter('format_month')
 def format_month(month):
     return datetime.strptime(month, "%Y-%m").strftime("%B / %Y")
 
+app.jinja_env.filters['format_amount'] = format_amount
+app.jinja_env.filters['format_month'] = format_month
+
+def init_db():
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS expenses (
+            id SERIAL PRIMARY KEY,
+            category TEXT NOT NULL,
+            month TEXT NOT NULL,
+            index_value INTEGER,
+            amount REAL,
+            is_paid BOOLEAN DEFAULT FALSE
+        )
+        ''')
+        conn.commit()
+
 @app.route('/')
 def index():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM expenses WHERE category IN ('Chirie', 'Intretinere')")
-    general_expenses = cursor.fetchall()
-    cursor.execute("SELECT * FROM expenses WHERE category IN ('Gaz', 'Curent')")
-    utility_expenses = cursor.fetchall()
-    cursor.execute("SELECT DISTINCT month FROM expenses WHERE category='Gaz'")
-    gas_months = cursor.fetchall()
-    cursor.execute("SELECT DISTINCT month FROM expenses WHERE category='Curent'")
-    electric_months = cursor.fetchall()
-    cursor.close()
-    conn.close()
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM expenses WHERE category IN ('Chirie', 'Intretinere')")
+        general_expenses = cursor.fetchall()
+        cursor.execute("SELECT * FROM expenses WHERE category IN ('Gaz', 'Curent')")
+        utility_expenses = cursor.fetchall()
+        cursor.execute("SELECT DISTINCT month FROM expenses WHERE category = 'Gaz' AND is_paid = FALSE")
+        gas_months = cursor.fetchall()
+        cursor.execute("SELECT DISTINCT month FROM expenses WHERE category = 'Curent' AND is_paid = FALSE")
+        electric_months = cursor.fetchall()
     return render_template('index.html', general_expenses=general_expenses, utility_expenses=utility_expenses, gas_months=gas_months, electric_months=electric_months)
 
-@app.route('/add_expense', methods=['POST'])
-def add_expense():
+@app.route('/add_index', methods=['POST'])
+def add_index():
     category = request.form['category']
     month = request.form['month']
     index_value = request.form.get('index_value')
+    amount = request.form.get('amount')
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        if index_value:
+            cursor.execute('''
+            INSERT INTO expenses (category, month, index_value)
+            VALUES (%s, %s, %s)
+            ''', (category, month, index_value))
+        else:
+            cursor.execute('''
+            INSERT INTO expenses (category, month, amount)
+            VALUES (%s, %s, %s)
+            ''', (category, month, amount))
+        conn.commit()
+    return redirect(url_for('index'))
+
+@app.route('/add_amount', methods=['POST'])
+def add_amount():
+    category = request.form['category']
+    month = request.form['month']
     amount = request.form['amount']
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-    INSERT INTO expenses (category, month, index_value, amount)
-    VALUES (%s, %s, %s, %s)
-    ''', (category, month, index_value, amount))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return 'Cheltuiala a fost adăugată!', 201
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+        UPDATE expenses
+        SET amount = %s
+        WHERE category = %s AND month = %s AND index_value IS NOT NULL
+        ''', (amount, category, month))
+        conn.commit()
+    return redirect(url_for('index'))
 
-@app.route('/mark_paid/<int:expense_id>', methods=['POST'])
-def mark_paid(expense_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-    UPDATE expenses
-    SET is_paid = TRUE
-    WHERE id = %s
-    ''', (expense_id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return 'Cheltuiala a fost marcată ca plătită!', 200
+@app.route('/pay/<int:expense_id>', methods=['POST'])
+def pay_expense(expense_id):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+        UPDATE expenses
+        SET is_paid = TRUE
+        WHERE id = %s
+        ''', (expense_id,))
+        conn.commit()
+    return redirect(url_for('index'))
 
-@app.route('/delete_expense/<int:expense_id>', methods=['POST'])
+@app.route('/delete/<int:expense_id>', methods=['POST'])
 def delete_expense(expense_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('DELETE FROM expenses WHERE id = %s', (expense_id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return 'Cheltuiala a fost ștearsă!', 200
-
-def run_flask():
-    serve(app, host='0.0.0.0', port=8000)
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM expenses WHERE id = %s', (expense_id,))
+        conn.commit()
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    run_flask()
+    init_db()
+    app.run(debug=True)
