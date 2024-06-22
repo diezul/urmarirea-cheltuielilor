@@ -7,7 +7,7 @@ from datetime import datetime
 app = Flask(__name__)
 
 # Extragem informațiile din URL
-db_url = urlparse('postgres://avnadmin:AVNS_8AemcdG9D_tz31TwHxt@expenses-tracker-expenses-tracker.i.aivencloud.com:28129/defaultdb?sslmode=require')
+db_url = urlparse('postgresql://expense-tracker_owner:dlC6fghx2WeY@ep-cool-haze-a5llm4ce.us-east-2.aws.neon.tech/expense-tracker?sslmode=require')
 db_name = db_url.path[1:]
 db_user = db_url.username
 db_password = db_url.password
