@@ -1,20 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for
 import psycopg2
 import os
-from urllib.parse import urlparse
 from datetime import datetime
 
 app = Flask(__name__)
-
-# Extragem informațiile din URL
-db_url = urlparse('postgres://postgres.fxcjhpkcfgrxwynzbsie:Gcdh103vgnadKrZM@aws-0-eu-central-1.pooler.supabase.com:6543/postgres')
-db_name = db_url.path[1:]
-db_user = db_url.username
-db_password = db_url.password
-db_host = db_url.hostname
-db_port = db_url.port
-
-DATABASE_URL = f"dbname={db_name} user={db_user} password={db_password} host={db_host} port={db_port} sslmode=require"
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://db_pcul_user:9zvoZgeYC5y9lsmDx5IoIULBvuVNRBMA@dpg-cpr3pmjv2p9s73a0gudg-a/db_pcul')
 
 def get_db_connection():
     conn = psycopg2.connect(DATABASE_URL)
