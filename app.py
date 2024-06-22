@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-DATABASE_URL = os.environ.get('DATABASE_URL', 'postgres://avnadmin:AVNS_8AemcdG9D_tz31TwHxt@expenses-tracker-expenses-tracker.i.aivencloud.com:28129/defaultdb?sslmode=require')
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://avnadmin:AVNS_8AemcdG9D_tz31TwHxt@expenses-tracker-expenses-tracker.i.aivencloud.com:28129/defaultdb')
 
 def get_db_connection():
     conn = psycopg2.connect(DATABASE_URL)
