@@ -10,7 +10,7 @@ from waitress import serve
 # Configurarea botului
 TOKEN = os.getenv('TOKEN', '7408319900:AAGnqFPQtu2nW-S24q8nXTGHMA1RnRlRpw8')
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:FtJVAFZwBpjAwFGclcWfXZULZkOOoEOI@viaduct.proxy.rlwy.net:24869/railway')
-WEBHOOK_URL = os.getenv('WEBHOOK_URL', 'https://yourappname.up.railway.app/webhook')
+WEBHOOK_URL = os.getenv('WEBHOOK_URL', 'https://web-production-34769.up.railway.app/webhook')
 
 app = Flask(__name__)
 
