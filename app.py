@@ -1,10 +1,21 @@
 from flask import Flask, render_template, request, redirect, url_for
 import psycopg2
 import os
+from urllib.parse import urlparse
 from datetime import datetime
 
 app = Flask(__name__)
-DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://avnadmin:AVNS_8AemcdG9D_tz31TwHxt@expenses-tracker-expenses-tracker.i.aivencloud.com:28129/defaultdb')
+
+# Extragem informațiile din URL
+db_url = urlparse('postgres://avnadmin:AVNS_8AemcdG9D_tz31TwHxt@expenses-tracker-expenses-tracker.i.aivencloud.com:28129/defaultdb?sslmode=require')
+db_name = db_url.path[1:]
+db_user = db_url.username
+db_password = db_url.password
+db_host = db_url.hostname
+db_port = db_url.port
+db_sslmode = db_url.query.split('=')[1]
+
+DATABASE_URL = f"dbname={db_name} user={db_user} password={db_password} host={db_host} port={db_port} sslmode={db_sslmode}"
 
 def get_db_connection():
     conn = psycopg2.connect(DATABASE_URL)
