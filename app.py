@@ -3,26 +3,37 @@ import psycopg2
 from urllib.parse import urlparse
 from flask import Flask, request, jsonify, render_template
 from waitress import serve
+import time
 
 app = Flask(__name__)
 
 # Configurarea bazei de date
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:FtJVAFZwBpjAwFGclcWfXZULZkOOoEOI@viaduct.proxy.rlwy.net:24869/railway')
 
-def get_db_connection():
+def get_db_connection(retry_count=5, delay=2):
     result = urlparse(DATABASE_URL)
     username = result.username
     password = result.password
     database = result.path[1:]
     hostname = result.hostname
     port = result.port
-    return psycopg2.connect(
-        database=database,
-        user=username,
-        password=password,
-        host=hostname,
-        port=port
-    )
+
+    for attempt in range(retry_count):
+        try:
+            conn = psycopg2.connect(
+                database=database,
+                user=username,
+                password=password,
+                host=hostname,
+                port=port
+            )
+            return conn
+        except psycopg2.OperationalError as e:
+            if attempt < retry_count - 1:
+                time.sleep(delay)
+                continue
+            else:
+                raise e
 
 def init_db():
     conn = get_db_connection()
