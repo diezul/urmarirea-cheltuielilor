@@ -8,9 +8,9 @@ from urllib.parse import urlparse
 
 app = Flask(__name__)
 
-API_URL = os.environ.get("API_URL")
+API_URL = os.environ.get("API_URL", "http://127.0.0.1:5001/api")
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:FtJVAFZwBpjAwFGclcWfXZULZkOOoEOI@viaduct.proxy.rlwy.net:24869/railway')
 
 def get_db_connection():
     result = urlparse(DATABASE_URL)
@@ -18,11 +18,13 @@ def get_db_connection():
     password = result.password
     database = result.path[1:]
     hostname = result.hostname
+    port = result.port
     return psycopg2.connect(
         database=database,
         user=username,
         password=password,
-        host=hostname
+        host=hostname,
+        port=port
     )
 
 def format_amount(value):

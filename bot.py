@@ -1,5 +1,4 @@
 import os
-import sqlite3
 import psycopg2
 from urllib.parse import urlparse
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -10,7 +9,7 @@ from waitress import serve
 
 # Configurarea botului
 TOKEN = os.getenv('TOKEN')
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:FtJVAFZwBpjAwFGclcWfXZULZkOOoEOI@viaduct.proxy.rlwy.net:24869/railway')
 
 app = Flask(__name__)
 
@@ -20,11 +19,13 @@ def get_db_connection():
     password = result.password
     database = result.path[1:]
     hostname = result.hostname
+    port = result.port
     return psycopg2.connect(
         database=database,
         user=username,
         password=password,
-        host=hostname
+        host=hostname,
+        port=port
     )
 
 def init_db():
