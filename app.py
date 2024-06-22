@@ -35,6 +35,11 @@ def get_db_connection(retry_count=5, delay=2):
             else:
                 raise e
 
+@app.route('/init_db')
+def init_db_route():
+    init_db()
+    return 'Database initialized!', 200
+
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -115,5 +120,4 @@ def run_flask():
     serve(app, host='0.0.0.0', port=8000)
 
 if __name__ == '__main__':
-    init_db()
     run_flask()
