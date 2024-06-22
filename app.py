@@ -41,7 +41,7 @@ def init_db():
 def index():
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM expenses WHERE category IN ('Chirie', 'Intretinere')")
+        cursor.execute("SELECT * FROM expenses WHERE category IN ('Chirie', 'Internet', 'Intretinere')")
         general_expenses = cursor.fetchall()
         cursor.execute("SELECT * FROM expenses WHERE category IN ('Gaz', 'Curent')")
         utility_expenses = cursor.fetchall()
