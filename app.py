@@ -25,28 +25,10 @@ def get_db_connection():
     )
 
 def init_db():
-    result = urlparse(DATABASE_URL)
-    conn = psycopg2.connect(
-        database='postgres',
-        user=result.username,
-        password=result.password,
-        host=result.hostname,
-        port=result.port
-    )
-    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s', ('railway',))
-    exists = cursor.fetchone()
-    if not exists:
-        cursor.execute('CREATE DATABASE railway')
-    
-    cursor.close()
-    conn.close()
-    
-    # Reconnect to the newly created database
     conn = get_db_connection()
     cursor = conn.cursor()
+    
+    # Crearea tabelului dacă nu există
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS expenses (
         id SERIAL PRIMARY KEY,
