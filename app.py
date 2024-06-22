@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 from flask import Flask, request, jsonify, render_template
 from waitress import serve
 import time
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -58,6 +59,10 @@ def init_db():
     conn.commit()
     cursor.close()
     conn.close()
+
+@app.template_filter('format_month')
+def format_month(month):
+    return datetime.strptime(month, "%Y-%m").strftime("%B / %Y")
 
 @app.route('/')
 def index():
